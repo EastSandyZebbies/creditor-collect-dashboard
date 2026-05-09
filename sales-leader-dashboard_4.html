@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditor Collect — Sales Leader Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f6f6f7; --surface: #ffffff; --border: #e4e4e8;
+    --text: #2b2b2e; --text2: #5e5e66; --text3: #a0a0aa;
+    --cw-red: #a51c30; --cw-red2: #fbeced;
+    --green: #1a7f5a; --green2: #e8f5f0;
+    --amber: #c47b2b; --amber2: #fdf3e7;
+    --blue: #2563a8; --blue2: #eef4fb;
+    --r: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  body { font-family: "DM Sans", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 224px; flex-shrink: 0; background: var(--surface);
+    border-right: 1px solid var(--border); padding: 24px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:none; } }
+  .logo-wrap { padding: 0 4px 18px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  .logo-wrap img { width: 148px; display: block; }
+  .logo-sub { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cw-red); margin-top: 8px; }
+  .nav-section { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; padding: 12px 8px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; padding: 8px 12px;
+    border-radius: 7px; color: var(--text2); font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 0.15s;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--cw-red2); color: var(--cw-red); }
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg); border-radius: 8px; }
+  .avatar { width: 32px; height: 32px; background: var(--cw-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .user-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .user-role { font-size: 11px; color: var(--text3); line-height: 1.3; }
+
+  .main { flex: 1; padding: 32px; overflow-y: auto; }
+  .page { display: none; animation: fadeUp 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+  .page-header { margin-bottom: 24px; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .page-header h1 { font-family: "Fraunces", serif; font-size: 26px; font-weight: 600; }
+  .page-header p { color: var(--text2); margin-top: 3px; font-size: 13px; }
+  .live-badge {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text2);
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .live-badge::before { content:""; width:7px; height:7px; background:var(--cw-red); border-radius:50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3col { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .mb { margin-bottom: 20px; }
+
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 16px 16px 13px; box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s; animation: fadeUp 0.4s ease both;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+  .kpi-card:nth-child(1){animation-delay:.05s} .kpi-card:nth-child(2){animation-delay:.1s}
+  .kpi-card:nth-child(3){animation-delay:.15s} .kpi-card:nth-child(4){animation-delay:.2s}
+  .kpi-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+  .kpi-value { font-family: "Fraunces", serif; font-size: 28px; font-weight: 600; line-height: 1; }
+  .kpi-value.g { color: var(--green); } .kpi-value.a { color: var(--amber); } .kpi-value.r { color: var(--cw-red); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .kpi-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .kpi-delta.up { background: var(--green2); color: var(--green); }
+  .kpi-delta.dn { background: var(--cw-red2); color: var(--cw-red); }
+  .kpi-delta.fl { background: var(--amber2); color: var(--amber); }
+  .bar-track { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 9px; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-fill.g { background: var(--green); } .bar-fill.a { background: var(--amber); } .bar-fill.r { background: var(--cw-red); }
+  .bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  /* TEAM TARGET TABLE */
+  .target-table { width: 100%; border-collapse: collapse; }
+  .target-table th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 0 10px 10px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  .target-table th.num { text-align: right; }
+  .target-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .target-table td.num { text-align: right; }
+  .target-table tr:last-child td { border-bottom: none; }
+  .target-table tr.total-row td { background: var(--bg); font-weight: 700; border-top: 2px solid var(--border); border-bottom: none; }
+  .target-table tr:hover:not(.total-row) td { background: var(--bg); }
+  .rep-chip { display: flex; align-items: center; gap: 9px; }
+  .rep-dot { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: white; flex-shrink: 0; }
+  .rep-n { font-weight: 600; font-size: 13px; }
+  .rep-t { font-size: 11px; color: var(--text3); }
+  .tier-badge { display: inline-flex; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .tier-senior { background: var(--cw-red2); color: var(--cw-red); }
+  .tier-junior { background: var(--blue2); color: var(--blue); }
+
+  /* PROGRESS COLS */
+  .prog-wrap { display: flex; align-items: center; gap: 8px; }
+  .prog-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 60px; }
+  .prog-fill { height: 100%; border-radius: 3px; }
+  .prog-val { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+
+  /* DEMO TRACKER */
+  .demo-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  .demo-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 12px; text-align: center; }
+  .demo-card-name { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 2px; }
+  .demo-card-tier { font-size: 10px; color: var(--text3); margin-bottom: 10px; }
+  .demo-circle-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto 10px; }
+  .demo-circle-wrap svg { transform: rotate(-90deg); }
+  .demo-circle-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+  .demo-circle-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+  .demo-circle-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .demo-circle-num { font-family: "Fraunces", serif; font-size: 18px; font-weight: 600; line-height: 1; }
+  .demo-circle-denom { font-size: 10px; color: var(--text3); }
+  .demo-stat { font-size: 11px; color: var(--text2); }
+  .demo-stat strong { font-weight: 700; }
+
+  /* FUNNEL */
+  .funnel { display: flex; flex-direction: column; gap: 7px; }
+  .funnel-row { display: flex; align-items: center; gap: 10px; }
+  .funnel-lbl { width: 80px; font-size: 11px; color: var(--text2); text-align: right; flex-shrink: 0; }
+  .funnel-bar-wrap { flex: 1; height: 26px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+  .funnel-bar { height: 100%; display: flex; align-items: center; padding: 0 10px; font-size: 11px; font-weight: 700; color: white; border-radius: 4px; }
+  .funnel-n { width: 28px; font-size: 12px; font-weight: 600; color: var(--text); }
+  .funnel-pct { width: 36px; font-size: 11px; color: var(--text3); }
+
+  /* STAGES */
+  .stages { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  .stage { flex: 1; padding: 13px 8px; text-align: center; border-right: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .stage:last-child { border-right: none; }
+  .stage:hover { background: var(--bg); }
+  .stage.active { background: var(--cw-red2); }
+  .stage-name { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
+  .stage-count { font-family: "Fraunces", serif; font-size: 20px; font-weight: 600; color: var(--text); margin: 2px 0; }
+  .stage-val { font-size: 11px; color: var(--text2); font-weight: 500; }
+
+  /* DEALS TABLE */
+  .deals-table { width: 100%; border-collapse: collapse; }
+  .deals-table th { text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 0 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .deals-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .deals-table tr:last-child td { border-bottom: none; }
+  .deals-table tr:hover td { background: var(--bg); }
+  .deal-name { font-weight: 600; }
+  .deal-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .pill { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pill-blue { background: var(--blue2); color: var(--blue); }
+  .pill-amber { background: var(--amber2); color: var(--amber); }
+  .pill-green { background: var(--green2); color: var(--green); }
+  .pill-red { background: var(--cw-red2); color: var(--cw-red); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-g { background: var(--green); } .dot-a { background: var(--amber); } .dot-r { background: var(--cw-red); }
+  .next-action { font-size: 12px; color: var(--text2); }
+
+  /* RHYTHM */
+  .week-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  .day-col { background: var(--bg); border-radius: 8px; padding: 12px 10px; border: 1px solid var(--border); }
+  .day-name { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text3); margin-bottom: 8px; }
+  .r-event { background: white; border: 1px solid var(--border); border-left: 3px solid var(--cw-red); border-radius: 5px; padding: 7px 8px; margin-bottom: 6px; font-size: 11px; font-weight: 600; color: var(--text); }
+  .r-event.blue { border-left-color: var(--blue); }
+  .r-event.amber { border-left-color: var(--amber); }
+  .r-event.green { border-left-color: var(--green); }
+  .r-time { font-size: 10px; color: var(--text3); font-weight: 400; margin-top: 2px; }
+
+  /* INSIGHTS */
+  .insights { display: flex; flex-direction: column; gap: 9px; }
+  .insight { display: flex; gap: 10px; padding: 11px 12px; background: var(--bg); border-radius: 7px; border: 1px solid var(--border); font-size: 12px; line-height: 1.5; }
+  .insight-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .insight strong { font-weight: 600; }
+
+  /* METRIC STRIP */
+  .metric-strip { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  .metric-cell { flex: 1; padding: 14px 16px; border-right: 1px solid var(--border); }
+  .metric-cell:last-child { border-right: none; }
+  .metric-cell-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 3px; }
+  .metric-cell-val { font-family: "Fraunces", serif; font-size: 20px; font-weight: 600; }
+  .metric-cell-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* SKILL BARS */
+  .skill-item { margin-bottom: 10px; }
+  .skill-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; font-weight: 500; }
+
+  /* CONTEXT BANNER */
+  .context-banner {
+    background: linear-gradient(135deg, var(--cw-red) 0%, #7b1422 100%);
+    border-radius: var(--r); padding: 14px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px; color: white;
+  }
+  .context-banner-icon { font-size: 26px; flex-shrink: 0; }
+  .context-banner h3 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .context-banner p { font-size: 12px; opacity: 0.85; line-height: 1.4; }
+  .context-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+  .context-pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; }
+
+  .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; color: white; white-space: nowrap; }
+  .badge-red { background: var(--cw-red); } .badge-blue { background: var(--blue); } .badge-amber { background: var(--amber); }
+  .chart-axis { fill: var(--text3); font-size: 10px; font-family: "DM Sans",sans-serif; }
+
+
+  /* LEADERBOARD */
+  .lb-tabs { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 8px; display: inline-flex; margin-bottom: 20px; }
+  .lb-tab { padding: 7px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; border: none; background: none; transition: all 0.15s; }
+  .lb-tab.active { background: white; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  .podium-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 28px; }
+  .podium-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .podium-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: white; margin-bottom: 8px; position: relative; }
+  .podium-avatar .crown { position: absolute; top: -14px; font-size: 20px; }
+  .podium-name { font-size: 12px; font-weight: 700; text-align: center; margin-bottom: 2px; }
+  .podium-mrr { font-family: "Fraunces", serif; font-size: 16px; font-weight: 600; text-align: center; }
+  .podium-attain { font-size: 11px; text-align: center; margin-bottom: 6px; }
+  .podium-block { border-radius: 8px 8px 0 0; width: 90px; display: flex; align-items: center; justify-content: center; }
+  .podium-pos { font-family: "Fraunces", serif; font-size: 28px; font-weight: 600; color: white; opacity: 0.7; }
+  .podium-col.p1 .podium-block { height: 100px; background: linear-gradient(180deg, #c47b2b, #a0601e); }
+  .podium-col.p2 .podium-block { height: 70px; background: linear-gradient(180deg, #6b7280, #4b5563); }
+  .podium-col.p3 .podium-block { height: 50px; background: linear-gradient(180deg, #92400e, #78350f); }
+
+  .lb-table { width: 100%; border-collapse: collapse; }
+  .lb-table th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 0 12px 10px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  .lb-table th.num { text-align: right; }
+  .lb-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .lb-table td.num { text-align: right; }
+  .lb-table tr:last-child td { border-bottom: none; }
+  .lb-table tr:hover td { background: var(--bg); }
+  .lb-table tr.leader td { background: linear-gradient(90deg, rgba(196,123,43,0.05) 0%, transparent 100%); }
+  .lb-rank { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-size: 16px; font-weight: 600; flex-shrink: 0; }
+  .lb-rank.r1 { background: linear-gradient(135deg, #f59e0b, #c47b2b); color: white; }
+  .lb-rank.r2 { background: linear-gradient(135deg, #9ca3af, #6b7280); color: white; }
+  .lb-rank.r3 { background: linear-gradient(135deg, #b45309, #92400e); color: white; }
+  .lb-rank.r4, .lb-rank.r5 { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+  .lb-rep-chip { display: flex; align-items: center; gap: 10px; }
+  .lb-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: white; flex-shrink: 0; }
+  .lb-name { font-weight: 600; font-size: 13px; }
+  .lb-tier { font-size: 11px; color: var(--text3); }
+  .lb-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .lb-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; min-width: 80px; }
+  .lb-bar-fill { height: 100%; border-radius: 4px; }
+  .lb-pct { font-size: 12px; font-weight: 700; width: 40px; text-align: right; }
+  .trend-up { color: var(--green); font-size: 12px; font-weight: 700; }
+  .trend-dn { color: var(--cw-red); font-size: 12px; font-weight: 700; }
+  .trend-fl { color: var(--amber); font-size: 12px; font-weight: 700; }
+  .lb-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .lb-highlight { background: var(--amber2); border: 1px solid #f0c070; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+
+  .mini-leaderboard { display: flex; flex-direction: column; gap: 0; }
+  .mini-lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .mini-lb-row:last-child { border-bottom: none; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <img src="data:image/webp;base64,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" alt="CreditorWatch">
+    <div class="logo-sub">Collect · Sales Leader</div>
+  </div>
+  <div class="nav-section">Overview</div>
+  <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">◈</span> Dashboard</button>
+  <button class="nav-item" onclick="showPage('targets',this)"><span class="icon">🎯</span> Targets & Demos</button>
+  <button class="nav-item" onclick="showPage('leaderboard',this)"><span class="icon">🏆</span> Leaderboard</button>
+  <button class="nav-item" onclick="showPage('pipeline',this)"><span class="icon">⟳</span> Pipeline</button>
+  <div class="nav-section">Management</div>
+  <button class="nav-item" onclick="showPage('rhythm',this)"><span class="icon">◷</span> Operating Rhythm</button>
+  <button class="nav-item" onclick="showPage('team',this)"><span class="icon">◎</span> Team</button>
+  <div class="nav-section">Strategy</div>
+  <button class="nav-item" onclick="showPage('coaching',this)"><span class="icon">◉</span> Coaching</button>
+  <button class="nav-item" onclick="showPage('expansion',this)"><span class="icon">⬡</span> Expansion Strategy</button>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">SL</div>
+      <div>
+        <div class="user-name">Sales Manager</div>
+        <div class="user-role">Collect · Expansion</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="header-row">
+      <div>
+        <h1>Good morning ☀️</h1>
+        <p>Creditor Collect expansion — 5 reps · $13,500 MRR team target · 100 demos/month</p>
+      </div>
+      <div class="live-badge">Q2 · FY2025 · Week 7 of 13</div>
+    </div>
+  </div>
+
+  <div class="context-banner">
+    <div class="context-banner-icon">🎯</div>
+    <div>
+      <h3>Expansion Motion — Creditor Collect into existing CreditorWatch accounts</h3>
+      <p>5 reps · 2 senior ($3,000 MRR target) · 3 junior ($2,500 MRR target) · Avg deal $1,100 MRR · 20 demos/rep/month to hit numbers</p>
+      <div class="context-pills">
+        <span class="context-pill">$13,500 MRR Team Target</span>
+        <span class="context-pill">100 Demos/Month</span>
+        <span class="context-pill">~2–3 Deals/Rep/Month</span>
+        <span class="context-pill">$1,100 Avg MRR</span>
+        <span class="context-pill">AR Automation</span>
+        <span class="context-pill">Reduce DSO</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP KPIs -->
+  <div class="grid-4">
+    <div class="kpi-card">
+      <div class="kpi-label">Team MRR vs Target</div>
+      <div class="kpi-value g">$11,200</div>
+      <div class="kpi-sub">Target $13,500 MRR/month</div>
+      <div class="kpi-delta fl">⚠ 83% attainment</div>
+      <div class="bar-track"><div class="bar-fill a" style="width:83%"></div></div>
+      <div class="bar-labels"><span>$0</span><span>$13,500 target</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Team Demos This Month</div>
+      <div class="kpi-value g">78</div>
+      <div class="kpi-sub">Target 100 demos/month</div>
+      <div class="kpi-delta fl">⚠ 78% — pace up needed</div>
+      <div class="bar-track"><div class="bar-fill a" style="width:78%"></div></div>
+      <div class="bar-labels"><span>0</span><span>100 target</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Deals Closed This Month</div>
+      <div class="kpi-value g">9</div>
+      <div class="kpi-sub">Need ~12 to hit MRR target</div>
+      <div class="kpi-delta fl">⚠ 75% of goal</div>
+      <div class="bar-track"><div class="bar-fill a" style="width:75%"></div></div>
+      <div class="bar-labels"><span>0</span><span>12 deals goal</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Demo → Close Rate</div>
+      <div class="kpi-value g">18%</div>
+      <div class="kpi-sub">Target ~15% (1-in-5 demos)</div>
+      <div class="kpi-delta up">↑ Above benchmark</div>
+      <div class="bar-track"><div class="bar-fill g" style="width:85%"></div></div>
+      <div class="bar-labels"><span>0%</span><span>20% goal</span></div>
+    </div>
+  </div>
+
+  <!-- SECONDARY KPIs -->
+  <div class="grid-4" style="margin-bottom:20px;">
+    <div class="kpi-card">
+      <div class="kpi-label">Win Rate (Qualified)</div>
+      <div class="kpi-value g">38%</div>
+      <div class="kpi-sub">vs 31% last quarter</div>
+      <div class="kpi-delta up">↑ +7pts QoQ</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg MRR per Deal</div>
+      <div class="kpi-value">$1,100</div>
+      <div class="kpi-sub">$13,200 ARR per deal</div>
+      <div class="kpi-delta up">↑ On target</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pipeline Coverage</div>
+      <div class="kpi-value a">3.2×</div>
+      <div class="kpi-sub">Target ≥ 3.5×</div>
+      <div class="kpi-delta fl">⚠ Needs attention</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Sales Cycle</div>
+      <div class="kpi-value">42 days</div>
+      <div class="kpi-sub">Target &lt;45 days</div>
+      <div class="kpi-delta up">↑ On track</div>
+    </div>
+  </div>
+
+  <div class="grid-3col">
+    <div class="card">
+      <div class="card-title">Monthly New MRR vs $13,500 Target</div>
+      <svg width="100%" viewBox="0 0 380 140">
+        <line x1="44" y1="10" x2="44" y2="110" stroke="#e4e4e8" stroke-width="1"/>
+        <line x1="44" y1="110" x2="370" y2="110" stroke="#e4e4e8" stroke-width="1"/>
+        <line x1="44" y1="10" x2="370" y2="10" stroke="#e4e4e8" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="44" y1="60" x2="370" y2="60" stroke="#e4e4e8" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="38" y="13" class="chart-axis" text-anchor="end">$13.5K</text>
+        <text x="38" y="63" class="chart-axis" text-anchor="end">$6.75K</text>
+        <text x="38" y="113" class="chart-axis" text-anchor="end">$0</text>
+        <line x1="44" y1="10" x2="370" y2="10" stroke="#c47b2b" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="372" y="13" class="chart-axis" fill="#c47b2b">TGT</text>
+        <!-- Jan $12,100 -->
+        <rect x="58" y="20" width="26" height="90" fill="#e8f5f0" rx="3" opacity="0.5"/>
+        <rect x="58" y="20" width="26" height="90" fill="none" stroke="#e4e4e8" stroke-width="1" rx="3"/>
+        <rect x="58" y="20" width="26" height="90" fill="#1a7f5a" rx="3" opacity="0"/>
+        <rect x="58" y="30" width="26" height="80" fill="#1a7f5a" rx="3" opacity="0.85"/>
+        <text x="71" y="126" class="chart-axis" text-anchor="middle">Jan</text>
+        <!-- Feb $10,400 -->
+        <rect x="108" y="10" width="26" height="100" fill="#e8f5f0" rx="3" opacity="0.4"/>
+        <rect x="108" y="40" width="26" height="70" fill="#1a7f5a" rx="3" opacity="0.85"/>
+        <text x="121" y="126" class="chart-axis" text-anchor="middle">Feb</text>
+        <!-- Mar $13,800 -->
+        <rect x="158" y="10" width="26" height="100" fill="#e8f5f0" rx="3" opacity="0.4"/>
+        <rect x="158" y="8" width="26" height="102" fill="#1a7f5a" rx="3" opacity="0.9"/>
+        <text x="171" y="126" class="chart-axis" text-anchor="middle">Mar</text>
+        <!-- Apr $12,600 -->
+        <rect x="208" y="10" width="26" height="100" fill="#e8f5f0" rx="3" opacity="0.4"/>
+        <rect x="208" y="28" width="26" height="82" fill="#1a7f5a" rx="3" opacity="0.85"/>
+        <text x="221" y="126" class="chart-axis" text-anchor="middle">Apr</text>
+        <!-- May $11,200 (in progress) -->
+        <rect x="258" y="10" width="26" height="100" fill="#e8f5f0" rx="3" opacity="0.4"/>
+        <rect x="258" y="43" width="26" height="67" fill="#c47b2b" rx="3" opacity="0.85"/>
+        <text x="271" y="126" class="chart-axis" text-anchor="middle">May ▶</text>
+        <!-- Jun forecast -->
+        <rect x="308" y="10" width="26" height="100" fill="#e4e4e8" rx="3" opacity="0.35"/>
+        <text x="321" y="126" class="chart-axis" text-anchor="middle">Jun</text>
+      </svg>
+      <div style="display:flex;gap:14px;margin-top:6px;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;background:#1a7f5a;border-radius:2px;display:inline-block"></span>Actual MRR</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;background:#c47b2b;border-radius:2px;display:inline-block"></span>In Progress</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:10px;height:2px;background:#c47b2b;display:inline-block"></span>$13.5K Target</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pipeline Funnel (Deals)</div>
+      <div class="funnel" style="margin-top:4px;">
+        <div class="funnel-row"><div class="funnel-lbl">Prospect</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%;background:#1a7f5a;">42</div></div><div class="funnel-n">42</div><div class="funnel-pct">100%</div></div>
+        <div class="funnel-row"><div class="funnel-lbl">Qualify</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:71%;background:#2e9e6e;">30</div></div><div class="funnel-n">30</div><div class="funnel-pct">71%</div></div>
+        <div class="funnel-row"><div class="funnel-lbl">Demo</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:50%;background:#c47b2b;">21</div></div><div class="funnel-n">21</div><div class="funnel-pct">50%</div></div>
+        <div class="funnel-row"><div class="funnel-lbl">Proposal</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:31%;background:#b56a22;">13</div></div><div class="funnel-n">13</div><div class="funnel-pct">31%</div></div>
+        <div class="funnel-row"><div class="funnel-lbl">Negotiate</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:19%;background:#a51c30;">8</div></div><div class="funnel-n">8</div><div class="funnel-pct">19%</div></div>
+        <div class="funnel-row"><div class="funnel-lbl">Close</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:10%;background:#7b1422;">4</div></div><div class="funnel-n">4</div><div class="funnel-pct">10%</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Key Insights This Week</div>
+      <div class="insights">
+        <div class="insight"><div class="insight-icon">🎯</div><div><strong>$2,300 MRR gap</strong> to target. 3 more deals at avg $1,100 would close it. Push demos to close pipeline.</div></div>
+        <div class="insight"><div class="insight-icon">📊</div><div><strong>22 more demos needed</strong> this month across the team to hit 100. That's ~4–5 per rep this week.</div></div>
+        <div class="insight"><div class="insight-icon">📈</div><div><strong>Demo→close at 18%</strong> — above the 15% benchmark. Quality is good; volume is the lever.</div></div>
+        <div class="insight"><div class="insight-icon">⚠️</div><div><strong>J. Walsh below 50%</strong> on demos and MRR. Priority 1:1 this week — identify the blocker.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TARGETS & DEMOS ===== -->
+<div class="page" id="page-targets">
+  <div class="page-header">
+    <div class="header-row">
+      <div>
+        <h1>Targets &amp; Demo Tracking</h1>
+        <p>Individual rep targets · 20 demos/month each · $1,100 avg MRR per deal</p>
+      </div>
+      <div class="live-badge">May 2025 · Week 3 of 4</div>
+    </div>
+  </div>
+
+  <!-- TEAM SUMMARY STRIP -->
+  <div class="metric-strip">
+    <div class="metric-cell"><div class="metric-cell-lbl">Team MRR Target</div><div class="metric-cell-val">$13,500</div><div class="metric-cell-sub">Per month</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Senior Target (×2)</div><div class="metric-cell-val">$3,000</div><div class="metric-cell-sub">~2.7 deals/month each</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Junior Target (×3)</div><div class="metric-cell-val">$2,500</div><div class="metric-cell-sub">~2.3 deals/month each</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Avg Deal Value</div><div class="metric-cell-val">$1,100 MRR</div><div class="metric-cell-sub">$13,200 ARR</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Team Demos/Month</div><div class="metric-cell-val">100</div><div class="metric-cell-sub">20 per rep × 5 reps</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Demo-to-Close</div><div class="metric-cell-val">~1-in-5</div><div class="metric-cell-sub">15–18% conversion target</div></div>
+  </div>
+
+  <!-- DEMO TRACKER CIRCLES -->
+  <div class="card mb">
+    <div class="card-title">Demo Tracker — May 2025 (Target: 20 each / 100 team)</div>
+    <div class="demo-grid">
+      <!-- A. Nguyen: 19/20 -->
+      <div class="demo-card">
+        <div class="demo-card-name">A. Nguyen</div>
+        <div class="demo-card-tier">Senior · $3,000 target</div>
+        <div class="demo-circle-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="demo-circle-bg" cx="36" cy="36" r="30"/>
+            <circle class="demo-circle-fill" cx="36" cy="36" r="30" stroke="#1a7f5a"
+              stroke-dasharray="188.5" stroke-dashoffset="10"/>
+          </svg>
+          <div class="demo-circle-text">
+            <div class="demo-circle-num" style="color:#1a7f5a">19</div>
+            <div class="demo-circle-denom">of 20</div>
+          </div>
+        </div>
+        <div class="demo-stat">MRR: <strong style="color:#1a7f5a">$3,200</strong></div>
+        <div class="demo-stat">Deals: <strong>3</strong> this month</div>
+        <div class="demo-stat" style="margin-top:4px;"><span style="background:var(--green2);color:var(--green);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">107% 🏆</span></div>
+      </div>
+
+      <!-- S. Patel: 18/20 -->
+      <div class="demo-card">
+        <div class="demo-card-name">S. Patel</div>
+        <div class="demo-card-tier">Senior · $3,000 target</div>
+        <div class="demo-circle-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="demo-circle-bg" cx="36" cy="36" r="30"/>
+            <circle class="demo-circle-fill" cx="36" cy="36" r="30" stroke="#2563a8"
+              stroke-dasharray="188.5" stroke-dashoffset="19"/>
+          </svg>
+          <div class="demo-circle-text">
+            <div class="demo-circle-num" style="color:#2563a8">18</div>
+            <div class="demo-circle-denom">of 20</div>
+          </div>
+        </div>
+        <div class="demo-stat">MRR: <strong style="color:#2563a8">$2,800</strong></div>
+        <div class="demo-stat">Deals: <strong>2</strong> this month</div>
+        <div class="demo-stat" style="margin-top:4px;"><span style="background:var(--amber2);color:var(--amber);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">93% ⚡</span></div>
+      </div>
+
+      <!-- T. Okafor: 16/20 -->
+      <div class="demo-card">
+        <div class="demo-card-name">T. Okafor</div>
+        <div class="demo-card-tier">Junior · $2,500 target</div>
+        <div class="demo-circle-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="demo-circle-bg" cx="36" cy="36" r="30"/>
+            <circle class="demo-circle-fill" cx="36" cy="36" r="30" stroke="#c47b2b"
+              stroke-dasharray="188.5" stroke-dashoffset="38"/>
+          </svg>
+          <div class="demo-circle-text">
+            <div class="demo-circle-num" style="color:#c47b2b">16</div>
+            <div class="demo-circle-denom">of 20</div>
+          </div>
+        </div>
+        <div class="demo-stat">MRR: <strong style="color:#c47b2b">$2,500</strong></div>
+        <div class="demo-stat">Deals: <strong>2</strong> this month</div>
+        <div class="demo-stat" style="margin-top:4px;"><span style="background:var(--green2);color:var(--green);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">100% 📈</span></div>
+      </div>
+
+      <!-- M. Chen: 14/20 -->
+      <div class="demo-card">
+        <div class="demo-card-name">M. Chen</div>
+        <div class="demo-card-tier">Junior · $2,500 target</div>
+        <div class="demo-circle-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="demo-circle-bg" cx="36" cy="36" r="30"/>
+            <circle class="demo-circle-fill" cx="36" cy="36" r="30" stroke="#c47b2b"
+              stroke-dasharray="188.5" stroke-dashoffset="56"/>
+          </svg>
+          <div class="demo-circle-text">
+            <div class="demo-circle-num" style="color:#c47b2b">14</div>
+            <div class="demo-circle-denom">of 20</div>
+          </div>
+        </div>
+        <div class="demo-stat">MRR: <strong style="color:#c47b2b">$1,900</strong></div>
+        <div class="demo-stat">Deals: <strong>2</strong> this month</div>
+        <div class="demo-stat" style="margin-top:4px;"><span style="background:var(--amber2);color:var(--amber);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">76% ⚠</span></div>
+      </div>
+
+      <!-- J. Walsh: 11/20 -->
+      <div class="demo-card">
+        <div class="demo-card-name">J. Walsh</div>
+        <div class="demo-card-tier">Junior · $2,500 target</div>
+        <div class="demo-circle-wrap">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle class="demo-circle-bg" cx="36" cy="36" r="30"/>
+            <circle class="demo-circle-fill" cx="36" cy="36" r="30" stroke="#a51c30"
+              stroke-dasharray="188.5" stroke-dashoffset="84"/>
+          </svg>
+          <div class="demo-circle-text">
+            <div class="demo-circle-num" style="color:#a51c30">11</div>
+            <div class="demo-circle-denom">of 20</div>
+          </div>
+        </div>
+        <div class="demo-stat">MRR: <strong style="color:#a51c30">$800</strong></div>
+        <div class="demo-stat">Deals: <strong>1</strong> this month</div>
+        <div class="demo-stat" style="margin-top:4px;"><span style="background:var(--cw-red2);color:var(--cw-red);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">32% 🚨</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARGET TABLE -->
+  <div class="card">
+    <div class="card-title">Rep Target Scorecard — May 2025</div>
+    <table class="target-table">
+      <thead>
+        <tr>
+          <th>Rep</th>
+          <th>Tier</th>
+          <th class="num">MRR Target</th>
+          <th class="num">MRR Actual</th>
+          <th style="min-width:120px;">MRR Progress</th>
+          <th class="num">Deals Needed</th>
+          <th class="num">Deals Done</th>
+          <th class="num">Demos Target</th>
+          <th class="num">Demos Done</th>
+          <th style="min-width:100px;">Demo Progress</th>
+          <th class="num">D→C Rate</th>
+          <th class="num">Attainment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="rep-chip"><div class="rep-dot" style="background:#1a7f5a">AN</div><div><div class="rep-n">A. Nguyen</div></div></div></td>
+          <td><span class="tier-badge tier-senior">Senior</span></td>
+          <td class="num">$3,000</td>
+          <td class="num" style="font-weight:700;color:var(--green)">$3,200</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--green)"></div></div><div class="prog-val" style="color:var(--green)">107%</div></div></td>
+          <td class="num">~3</td>
+          <td class="num" style="font-weight:700;">3</td>
+          <td class="num">20</td>
+          <td class="num" style="font-weight:700;color:var(--green)">19</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:95%;background:var(--green)"></div></div><div class="prog-val" style="color:var(--green)">95%</div></div></td>
+          <td class="num" style="color:var(--green)">16%</td>
+          <td class="num"><span style="background:var(--green2);color:var(--green);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">107% 🏆</span></td>
+        </tr>
+        <tr>
+          <td><div class="rep-chip"><div class="rep-dot" style="background:#2563a8">SP</div><div><div class="rep-n">S. Patel</div></div></div></td>
+          <td><span class="tier-badge tier-senior">Senior</span></td>
+          <td class="num">$3,000</td>
+          <td class="num" style="font-weight:700;color:var(--amber)">$2,800</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:93%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">93%</div></div></td>
+          <td class="num">~3</td>
+          <td class="num" style="font-weight:700;">2</td>
+          <td class="num">20</td>
+          <td class="num" style="font-weight:700;color:var(--amber)">18</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:90%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">90%</div></div></td>
+          <td class="num" style="color:var(--blue)">11%</td>
+          <td class="num"><span style="background:var(--amber2);color:var(--amber);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">93% ⚡</span></td>
+        </tr>
+        <tr>
+          <td><div class="rep-chip"><div class="rep-dot" style="background:#c47b2b">TO</div><div><div class="rep-n">T. Okafor</div></div></div></td>
+          <td><span class="tier-badge tier-junior">Junior</span></td>
+          <td class="num">$2,500</td>
+          <td class="num" style="font-weight:700;color:var(--green)">$2,500</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--green)"></div></div><div class="prog-val" style="color:var(--green)">100%</div></div></td>
+          <td class="num">~2–3</td>
+          <td class="num" style="font-weight:700;">2</td>
+          <td class="num">20</td>
+          <td class="num" style="font-weight:700;color:var(--amber)">16</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:80%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">80%</div></div></td>
+          <td class="num" style="color:var(--green)">13%</td>
+          <td class="num"><span style="background:var(--green2);color:var(--green);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">100% 📈</span></td>
+        </tr>
+        <tr>
+          <td><div class="rep-chip"><div class="rep-dot" style="background:#5c6bc0">MC</div><div><div class="rep-n">M. Chen</div></div></div></td>
+          <td><span class="tier-badge tier-junior">Junior</span></td>
+          <td class="num">$2,500</td>
+          <td class="num" style="font-weight:700;color:var(--amber)">$1,900</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:76%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">76%</div></div></td>
+          <td class="num">~2–3</td>
+          <td class="num" style="font-weight:700;">2</td>
+          <td class="num">20</td>
+          <td class="num" style="font-weight:700;color:var(--amber)">14</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:70%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">70%</div></div></td>
+          <td class="num" style="color:var(--amber)">14%</td>
+          <td class="num"><span style="background:var(--amber2);color:var(--amber);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">76% ⚠</span></td>
+        </tr>
+        <tr>
+          <td><div class="rep-chip"><div class="rep-dot" style="background:#a51c30">JW</div><div><div class="rep-n">J. Walsh</div></div></div></td>
+          <td><span class="tier-badge tier-junior">Junior</span></td>
+          <td class="num">$2,500</td>
+          <td class="num" style="font-weight:700;color:var(--cw-red)">$800</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:32%;background:var(--cw-red)"></div></div><div class="prog-val" style="color:var(--cw-red)">32%</div></div></td>
+          <td class="num">~2–3</td>
+          <td class="num" style="font-weight:700;">1</td>
+          <td class="num">20</td>
+          <td class="num" style="font-weight:700;color:var(--cw-red)">11</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:55%;background:var(--cw-red)"></div></div><div class="prog-val" style="color:var(--cw-red)">55%</div></div></td>
+          <td class="num" style="color:var(--cw-red)">9%</td>
+          <td class="num"><span style="background:var(--cw-red2);color:var(--cw-red);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">32% 🚨</span></td>
+        </tr>
+        <tr class="total-row">
+          <td><div class="rep-chip"><div style="width:30px;height:30px;border-radius:50%;background:var(--text);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:white;">ALL</div><div><div class="rep-n">Team Total</div></div></div></td>
+          <td></td>
+          <td class="num">$13,500</td>
+          <td class="num" style="color:var(--amber)">$11,200</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:83%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">83%</div></div></td>
+          <td class="num">~12</td>
+          <td class="num">10</td>
+          <td class="num">100</td>
+          <td class="num" style="color:var(--amber)">78</td>
+          <td><div class="prog-wrap"><div class="prog-track"><div class="prog-fill" style="width:78%;background:var(--amber)"></div></div><div class="prog-val" style="color:var(--amber)">78%</div></div></td>
+          <td class="num">13%</td>
+          <td class="num"><span style="background:var(--amber2);color:var(--amber);font-weight:700;padding:3px 9px;border-radius:20px;font-size:12px;">83% ⚠</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PIPELINE ===== -->
+<div class="page" id="page-pipeline">
+  <div class="page-header">
+    <div class="header-row">
+      <div><h1>Pipeline</h1><p>Expansion deals into existing CreditorWatch accounts · $1,100 avg MRR · ARR = MRR × 12 · ~42 day cycle</p></div>
+      <div class="live-badge">Live · Q2 FY2025</div>
+    </div>
+  </div>
+  <div class="stages">
+    <div class="stage"><div class="stage-name">Prospect</div><div class="stage-count">42</div><div class="stage-val">$554K ARR</div></div>
+    <div class="stage"><div class="stage-name">Qualify</div><div class="stage-count">30</div><div class="stage-val">$396K ARR</div></div>
+    <div class="stage"><div class="stage-name">Demo</div><div class="stage-count">21</div><div class="stage-val">$277K ARR</div></div>
+    <div class="stage active"><div class="stage-name">Proposal</div><div class="stage-count">13</div><div class="stage-val">$171K ARR</div></div>
+    <div class="stage"><div class="stage-name">Negotiate</div><div class="stage-count">8</div><div class="stage-val">$105K ARR</div></div>
+    <div class="stage"><div class="stage-name">Close</div><div class="stage-count">4</div><div class="stage-val">$53K ARR</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Priority Deals — Q2 FY2025</div>
+    <table class="deals-table">
+      <thead>
+        <tr>
+          <th>Account (CW Customer)</th><th>Use Case</th><th>MRR</th><th>ARR (×12)</th>
+          <th>Stage</th><th>Health</th><th>Close</th><th>Next Action</th><th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="deal-name">Meridian Finance</div><div class="deal-sub">CW client 2.5yrs · 45 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">AR automation + Call Console</span></td>
+          <td style="font-weight:700;">$1,400</td><td style="color:var(--text3);font-size:12px;">$16,800</td>
+          <td><span class="pill pill-blue">Negotiate</span></td><td><span class="dot dot-g"></span></td>
+          <td style="font-size:12px;">Jun 14</td><td><span class="next-action">Legal review done — send final T&Cs</span></td>
+          <td style="font-size:12px;font-weight:600;">A. Nguyen</td>
+        </tr>
+        <tr>
+          <td><div class="deal-name">Westside Logistics</div><div class="deal-sub">CW client 1yr · 28 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">Email/SMS reminders + DSO reduction</span></td>
+          <td style="font-weight:700;">$1,100</td><td style="color:var(--text3);font-size:12px;">$13,200</td>
+          <td><span class="pill pill-amber">Proposal</span></td><td><span class="dot dot-a"></span></td>
+          <td style="font-size:12px;">Jun 28</td><td><span class="next-action">CFO sponsor meeting — ROI model ready</span></td>
+          <td style="font-size:12px;font-weight:600;">T. Okafor</td>
+        </tr>
+        <tr>
+          <td><div class="deal-name">HealthFirst Group</div><div class="deal-sub">CW client 3yrs · 120 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">Full Collect suite + AR Specialists</span></td>
+          <td style="font-weight:700;">$2,200</td><td style="color:var(--text3);font-size:12px;">$26,400</td>
+          <td><span class="pill pill-blue">Negotiate</span></td><td><span class="dot dot-g"></span></td>
+          <td style="font-size:12px;">Jun 30</td><td><span class="next-action">Pricing approved — revised SOW to send</span></td>
+          <td style="font-size:12px;font-weight:600;">S. Patel</td>
+        </tr>
+        <tr>
+          <td><div class="deal-name">Pinnacle Retail</div><div class="deal-sub">CW client 8mo · 18 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">Automated reminders + debt escalation</span></td>
+          <td style="font-weight:700;">$900</td><td style="color:var(--text3);font-size:12px;">$10,800</td>
+          <td><span class="pill pill-amber">Proposal</span></td><td><span class="dot dot-r"></span></td>
+          <td style="font-size:12px;">Jun 15</td><td><span class="next-action">⚠ 34 days no contact — re-engage or retire</span></td>
+          <td style="font-size:12px;font-weight:600;">J. Walsh</td>
+        </tr>
+        <tr>
+          <td><div class="deal-name">Aurora Tech</div><div class="deal-sub">CW client 2yrs · 55 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">API integration + workflow automation</span></td>
+          <td style="font-weight:700;">$1,300</td><td style="color:var(--text3);font-size:12px;">$15,600</td>
+          <td><span class="pill pill-green">Closed ✓</span></td><td><span class="dot dot-g"></span></td>
+          <td style="font-size:12px;">May 31</td><td><span class="next-action">Won — awaiting PO. Schedule onboarding.</span></td>
+          <td style="font-size:12px;font-weight:600;">A. Nguyen</td>
+        </tr>
+        <tr>
+          <td><div class="deal-name">BlueStar Manufacturing</div><div class="deal-sub">CW client 1.5yrs · 40 staff</div></td>
+          <td><span style="font-size:12px;color:var(--text2);">Debtor mgmt + MYOB integration</span></td>
+          <td style="font-weight:700;">$1,100</td><td style="color:var(--text3);font-size:12px;">$13,200</td>
+          <td><span class="pill pill-red">Demo</span></td><td><span class="dot dot-a"></span></td>
+          <td style="font-size:12px;">Jul 15</td><td><span class="next-action">Send DSO benchmark report + ROI model</span></td>
+          <td style="font-size:12px;font-weight:600;">M. Chen</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== RHYTHM ===== -->
+<div class="page" id="page-rhythm">
+  <div class="page-header">
+    <div class="header-row">
+      <div><h1>Operating Rhythm</h1><p>How I structure the week to keep the Collect team on demos, deals, and target.</p></div>
+    </div>
+  </div>
+  <div class="card mb">
+    <div class="card-title">Weekly Cadence</div>
+    <div class="week-grid" style="margin-top:4px;">
+      <div class="day-col">
+        <div class="day-name">Monday</div>
+        <div class="r-event"><div>Team Standup</div><div class="r-time">8:30 – 9:00am</div></div>
+        <div class="r-event blue"><div>Pipeline Review</div><div class="r-time">9:00 – 10:00am</div></div>
+        <div class="r-event amber"><div>Week Goal Setting</div><div class="r-time">10:00 – 10:30am</div></div>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Tuesday</div>
+        <div class="r-event blue"><div>1:1s — Senior Reps</div><div class="r-time">9:00 – 10:30am</div></div>
+        <div class="r-event green"><div>Deal Strategy</div><div class="r-time">11:00 – 12:00pm</div></div>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Wednesday</div>
+        <div class="r-event blue"><div>1:1s — Junior Reps</div><div class="r-time">9:00 – 11:00am</div></div>
+        <div class="r-event amber"><div>Cross-Functional</div><div class="r-time">2:00 – 3:00pm</div></div>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Thursday</div>
+        <div class="r-event"><div>Demo Reviews</div><div class="r-time">9:00 – 10:30am</div></div>
+        <div class="r-event blue"><div>Coaching Calls</div><div class="r-time">1:00 – 2:30pm</div></div>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Friday</div>
+        <div class="r-event amber"><div>Forecast Call</div><div class="r-time">10:00 – 11:00am</div></div>
+        <div class="r-event green"><div>Wins &amp; Retros</div><div class="r-time">4:00 – 4:30pm</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Meeting Principles</div>
+      <div class="insights">
+        <div class="insight"><div class="insight-icon">📊</div><div><strong>Monday Pipeline Review</strong> — opens with demo count per rep. Volume is the leading indicator; deal quality follows.</div></div>
+        <div class="insight"><div class="insight-icon">🤝</div><div><strong>1:1s</strong> — structured around demo pipeline, deal health, and a specific skill to improve this week. Never just a report-out.</div></div>
+        <div class="insight"><div class="insight-icon">🎬</div><div><strong>Thursday Demo Review</strong> — listen to one recorded demo together per rep per fortnight. Build the Collect playbook from real calls.</div></div>
+        <div class="insight"><div class="insight-icon">🔮</div><div><strong>Friday Forecast</strong> — commit, best case, upside. Data-backed MRR and demo count with action owners.</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Monthly &amp; Quarterly Cadence</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">MONTHLY</span><span style="font-size:13px;">Business review — MRR vs target, demo pace, win rate, expansion whitespace remaining.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">MONTHLY</span><span style="font-size:13px;">Rep skill session — demo sharpening, ROI/DSO storytelling, objection handling workshop.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-blue">QUARTERLY</span><span style="font-size:13px;">QBR — each rep presents their territory: MRR attained, demos run, pipeline plan for next quarter.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-blue">QUARTERLY</span><span style="font-size:13px;">Account segmentation refresh — re-score CW base for Collect fit by industry, team size, overdue trends.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-amber">ONGOING</span><span style="font-size:13px;">Deal strategy session for any deal stalled &gt;2 weeks or &gt;$2K MRR. Always a two-way coaching conversation.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAM ===== -->
+<div class="page" id="page-team">
+  <div class="page-header">
+    <div class="header-row">
+      <div><h1>Team Performance</h1><p>5 reps · MRR attainment, demos, pipeline — May 2025</p></div>
+      <div class="live-badge">Week 3 of 4</div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="kpi-card"><div class="kpi-label">Reps at/above Target</div><div class="kpi-value g">2 / 5</div><div class="kpi-sub">A. Nguyen &amp; T. Okafor</div><div class="kpi-delta fl">⚠ 3 reps need support</div></div>
+    <div class="kpi-card"><div class="kpi-label">Team MRR Closed</div><div class="kpi-value a">$11,200</div><div class="kpi-sub">vs $13,500 target — 83%</div><div class="kpi-delta fl">⚠ $2,300 gap to close</div></div>
+    <div class="kpi-card"><div class="kpi-label">Team Demos Run</div><div class="kpi-value a">78</div><div class="kpi-sub">vs 100 target — 22 to go</div><div class="kpi-delta fl">⚠ 4–5 per rep this week</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Full Team Scorecard — Demos · MRR · Pipeline</div>
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:50%;background:#1a7f5a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">AN</div>
+        <div style="min-width:120px;"><div style="font-weight:600;font-size:13px;">A. Nguyen</div><div style="font-size:11px;color:var(--text3);">🏆 Senior · $3,000 target</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">MRR</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:107%;height:100%;background:#1a7f5a;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#1a7f5a;">$3,200</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Demos</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:95%;height:100%;background:#1a7f5a;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#1a7f5a;">19/20</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Pipeline</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:90%;height:100%;background:#1a7f5a;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#1a7f5a;">$18.5K</div></div>
+        </div>
+        <div style="min-width:52px;text-align:right;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#1a7f5a;">107%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:50%;background:#2563a8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">SP</div>
+        <div style="min-width:120px;"><div style="font-weight:600;font-size:13px;">S. Patel</div><div style="font-size:11px;color:var(--text3);">⚡ Senior · $3,000 target</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">MRR</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:93%;height:100%;background:#2563a8;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#2563a8;">$2,800</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Demos</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:90%;height:100%;background:#2563a8;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#2563a8;">18/20</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Pipeline</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:80%;height:100%;background:#2563a8;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#2563a8;">$16K</div></div>
+        </div>
+        <div style="min-width:52px;text-align:right;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#2563a8;">93%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:50%;background:#c47b2b;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">TO</div>
+        <div style="min-width:120px;"><div style="font-weight:600;font-size:13px;">T. Okafor</div><div style="font-size:11px;color:var(--text3);">📈 Junior · $2,500 target</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">MRR</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:100%;height:100%;background:#c47b2b;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#c47b2b;">$2,500</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Demos</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:80%;height:100%;background:#c47b2b;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#c47b2b;">16/20</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Pipeline</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:75%;height:100%;background:#c47b2b;border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:#c47b2b;">$14K</div></div>
+        </div>
+        <div style="min-width:52px;text-align:right;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#c47b2b;">100%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:50%;background:#5c6bc0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">MC</div>
+        <div style="min-width:120px;"><div style="font-weight:600;font-size:13px;">M. Chen</div><div style="font-size:11px;color:var(--text3);">⚠ Junior · $2,500 target</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">MRR</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:76%;height:100%;background:var(--amber);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--amber);">$1,900</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Demos</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:70%;height:100%;background:var(--amber);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--amber);">14/20</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Pipeline</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:65%;height:100%;background:var(--amber);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--amber);">$11K</div></div>
+        </div>
+        <div style="min-width:52px;text-align:right;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--amber);">76%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;">
+        <div style="width:34px;height:34px;border-radius:50%;background:#a51c30;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">JW</div>
+        <div style="min-width:120px;"><div style="font-weight:600;font-size:13px;">J. Walsh</div><div style="font-size:11px;color:var(--text3);">🚨 Junior · $2,500 target</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">MRR</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:32%;height:100%;background:var(--cw-red);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--cw-red);">$800</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Demos</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:55%;height:100%;background:var(--cw-red);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--cw-red);">11/20</div></div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:56px;font-size:10px;color:var(--text3);">Pipeline</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:40%;height:100%;background:var(--cw-red);border-radius:3px;"></div></div><div style="width:52px;font-size:11px;font-weight:700;text-align:right;color:var(--cw-red);">$6.5K</div></div>
+        </div>
+        <div style="min-width:52px;text-align:right;font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--cw-red);">32%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COACHING ===== -->
+<div class="page" id="page-coaching">
+  <div class="page-header">
+    <div class="header-row">
+      <div><h1>Coaching Framework</h1><p>Building demo-confident reps who can tell the Collect ROI story clearly to CFOs and Finance Managers.</p></div>
+    </div>
+  </div>
+  <div class="metric-strip">
+    <div class="metric-cell"><div class="metric-cell-lbl">Coaching Hrs/Month</div><div class="metric-cell-val">6 hrs</div><div class="metric-cell-sub">Per rep minimum</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Demo Reviews/Fortnight</div><div class="metric-cell-val">1 each</div><div class="metric-cell-sub">Recorded call review</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Skill Pillars</div><div class="metric-cell-val">8</div><div class="metric-cell-sub">Measured quarterly</div></div>
+    <div class="metric-cell"><div class="metric-cell-lbl">Avg Ramp Time</div><div class="metric-cell-val">3.5 mo</div><div class="metric-cell-sub">Target &lt;4 months</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">8 Pillars — Collect Expansion Rep Skills</div>
+      <div style="margin-top:4px;">
+        <div class="skill-item"><div class="skill-header"><span>CW Account Research &amp; Prioritisation</span><span style="color:var(--text2)">84%</span></div><div class="bar-track"><div class="bar-fill g" style="width:84%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>AR Pain Discovery &amp; Qualification</span><span style="color:var(--text2)">81%</span></div><div class="bar-track"><div class="bar-fill g" style="width:81%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>Collect Demo Delivery</span><span style="color:var(--text2)">74%</span></div><div class="bar-track"><div class="bar-fill a" style="width:74%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>DSO &amp; ROI Value Articulation</span><span style="color:var(--text2)">68%</span></div><div class="bar-track"><div class="bar-fill a" style="width:68%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>CFO / Finance Stakeholder Mapping</span><span style="color:var(--text2)">72%</span></div><div class="bar-track"><div class="bar-fill a" style="width:72%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>Objection Handling (cost, change)</span><span style="color:var(--text2)">70%</span></div><div class="bar-track"><div class="bar-fill a" style="width:70%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>Negotiation &amp; Expansion Close</span><span style="color:var(--text2)">65%</span></div><div class="bar-track"><div class="bar-fill a" style="width:65%"></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span>CRM Hygiene &amp; Demo Tracking</span><span style="color:var(--text2)">89%</span></div><div class="bar-track"><div class="bar-fill g" style="width:89%"></div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">My Coaching Philosophy</div>
+      <div class="insights">
+        <div class="insight"><div class="insight-icon">🎯</div><div><strong>Situational coaching.</strong> Directive for new starters learning the Collect demo, collaborative for developing reps, delegating for top performers.</div></div>
+        <div class="insight"><div class="insight-icon">🎬</div><div><strong>Demo reviews over gut feel.</strong> We watch recorded demos together and build the playbook from what actually closes deals.</div></div>
+        <div class="insight"><div class="insight-icon">📊</div><div><strong>Data-informed, not data-driven.</strong> Demo count tells me where to look. Call quality tells me why. I use both.</div></div>
+        <div class="insight"><div class="insight-icon">🌱</div><div><strong>Career conversations quarterly.</strong> I connect targets and performance to each rep's personal goals — that's how you earn discretionary effort.</div></div>
+        <div class="insight"><div class="insight-icon">🔁</div><div><strong>One improvement per session.</strong> Specific behaviour, followed up next week. Small consistent gains compound fast.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPANSION STRATEGY ===== -->
+<div class="page" id="page-expansion">
+  <div class="page-header">
+    <div class="header-row">
+      <div><h1>Expansion Strategy</h1><p>Selling Creditor Collect into the existing CreditorWatch base — warm accounts, clear ROI, short cycle.</p></div>
+    </div>
+  </div>
+  <div class="context-banner" style="margin-bottom:20px;">
+    <div class="context-banner-icon">💡</div>
+    <div>
+      <h3>The Expansion Opportunity</h3>
+      <p>Every CreditorWatch customer already trusts the brand. Collect is the natural next step — automating the AR follow-up process those same businesses run manually today. Warm relationships, fast demos, proven ROI.</p>
+    </div>
+  </div>
+  <div class="grid-4" style="margin-bottom:20px;">
+    <div class="kpi-card"><div class="kpi-label">CW Accounts (Total Base)</div><div class="kpi-value">8,400</div><div class="kpi-sub">Active CreditorWatch customers</div><div class="kpi-delta fl">Addressable market</div></div>
+    <div class="kpi-card"><div class="kpi-label">Already on Collect</div><div class="kpi-value r">22%</div><div class="kpi-sub">~1,850 accounts</div><div class="kpi-delta fl">Penetration to date</div></div>
+    <div class="kpi-card"><div class="kpi-label">Expansion Whitespace</div><div class="kpi-value g">6,550</div><div class="kpi-sub">Not yet on Collect</div><div class="kpi-delta up">↑ Primary target pool</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg DSO Reduction</div><div class="kpi-value g">13%</div><div class="kpi-sub">Collect users 6mo+</div><div class="kpi-delta up">↑ Core ROI proof point</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Account Scoring &amp; Prioritisation</div>
+      <div class="insights">
+        <div class="insight"><div class="insight-icon">🥇</div><div><strong>Tier 1 — High Fit:</strong> CW clients 12mo+, finance/professional services/retail, 10–150 staff, MYOB/Xero users. High AR volume, manual follow-up pain visible.</div></div>
+        <div class="insight"><div class="insight-icon">🥈</div><div><strong>Tier 2 — Medium Fit:</strong> CW clients 6–12mo, SME &lt;50 staff, no dedicated AR team. Good for automation starter pitch.</div></div>
+        <div class="insight"><div class="insight-icon">🥉</div><div><strong>Tier 3 — Monitor:</strong> New CW clients &lt;6mo or very small (&lt;10 staff). Nurture only — don't push Collect yet.</div></div>
+        <div class="insight"><div class="insight-icon">📊</div><div><strong>Scoring signals:</strong> CW overdue trends, days-since-last-Collect-touch, industry AR benchmarks, CSM flags on AR pain.</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Expansion Sales Motion</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">STEP 1</span><span style="font-size:13px;"><strong>Warm intro via CSM.</strong> No cold outreach — leverage the CW relationship. CSM flags high-fit accounts.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">STEP 2</span><span style="font-size:13px;"><strong>Discovery call.</strong> How do they chase overdue invoices today? Hours per week? What's their DSO?</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">STEP 3</span><span style="font-size:13px;"><strong>Tailored demo.</strong> Show Collect solving their specific pain — email/SMS workflows, Call Console, one-click debt escalation.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-red">STEP 4</span><span style="font-size:13px;"><strong>ROI proposal.</strong> Build a DSO model — 13% DSO reduction on $500K receivables = $65K cash freed. Pays for itself in weeks.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;"><span class="badge badge-amber">CLOSE</span><span style="font-size:13px;"><strong>14-day free trial.</strong> Low friction — let the product prove itself. Convert to $1,100 MRR on completion.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Key Objections &amp; Responses</div>
+    <table class="deals-table" style="margin-top:4px;">
+      <thead><tr><th style="width:35%">Objection</th><th>Response</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600;">"We already chase invoices manually — it works fine."</td><td><span class="next-action">Ask: how many hours per week? Collect automates up to 85% of that. What would your team do with that time back?</span></td></tr>
+        <tr><td style="font-weight:600;">"We pay for CW already — why another cost?"</td><td><span class="next-action">Reframe as ROI: 13% DSO reduction on $500K receivables = $65K cash freed. Collect pays for itself in weeks, not months.</span></td></tr>
+        <tr><td style="font-weight:600;">"Our accounting software already sends reminders."</td><td><span class="next-action">Collect goes beyond reminders — workflows, Call Console, debt escalation, AR reporting. Accounting software stops at the invoice.</span></td></tr>
+        <tr><td style="font-weight:600;">"We don't have time to implement new software."</td><td><span class="next-action">Xero/MYOB sync in minutes. Best-practice templates out of the box. Most customers are live and collecting in under a week.</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ===== LEADERBOARD ===== -->
+<div class="page" id="page-leaderboard">
+  <div class="page-header">
+    <div class="header-row">
+      <div>
+        <h1>Sales Leaderboard</h1>
+        <p>New MRR · Deals closed · Demo conversion · 5 reps competing for the top spot</p>
+      </div>
+      <div class="live-badge">May 2025 · Updated daily</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="lb-tabs">
+    <button class="lb-tab active" onclick="showLbTab('mtd', this)">Month to Date (MTD)</button>
+    <button class="lb-tab" onclick="showLbTab('ytd', this)">Year to Date (YTD)</button>
+  </div>
+
+  <!-- MTD VIEW -->
+  <div id="lb-mtd">
+    <div class="lb-highlight">
+      <span style="font-size:20px;">🏆</span>
+      <div><strong>A. Nguyen</strong> leads MTD at <strong>$3,200 MRR</strong> — 107% of target, 3 deals closed, 19 demos run. Only rep above their individual target this month.</div>
+    </div>
+
+    <!-- PODIUM -->
+    <div class="podium-wrap">
+      <!-- 2nd: S. Patel -->
+      <div class="podium-col p2">
+        <div class="podium-avatar" style="background:#2563a8;">SP</div>
+        <div class="podium-name">S. Patel</div>
+        <div class="podium-mrr" style="color:#2563a8;">$2,800</div>
+        <div class="podium-attain" style="color:var(--text3);">93% · 2 deals</div>
+        <div class="podium-block"><div class="podium-pos">2</div></div>
+      </div>
+      <!-- 1st: A. Nguyen -->
+      <div class="podium-col p1">
+        <div class="podium-avatar" style="background:#c47b2b;width:60px;height:60px;font-size:18px;">
+          <span class="crown">👑</span>AN
+        </div>
+        <div class="podium-name" style="font-size:14px;">A. Nguyen</div>
+        <div class="podium-mrr" style="color:#c47b2b;font-size:20px;">$3,200</div>
+        <div class="podium-attain" style="color:var(--green);font-weight:700;">107% · 3 deals</div>
+        <div class="podium-block"><div class="podium-pos">1</div></div>
+      </div>
+      <!-- 3rd: T. Okafor -->
+      <div class="podium-col p3">
+        <div class="podium-avatar" style="background:#c47b2b;">TO</div>
+        <div class="podium-name">T. Okafor</div>
+        <div class="podium-mrr" style="color:#c47b2b;">$2,500</div>
+        <div class="podium-attain" style="color:var(--text3);">100% · 2 deals</div>
+        <div class="podium-block"><div class="podium-pos">3</div></div>
+      </div>
+    </div>
+
+    <!-- FULL TABLE -->
+    <div class="card">
+      <div class="card-title">Full Rankings — MTD May 2025</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Rep</th>
+            <th class="num">MRR Target</th>
+            <th class="num">MRR Closed</th>
+            <th style="min-width:140px;">Attainment</th>
+            <th class="num">Deals</th>
+            <th class="num">Demos</th>
+            <th class="num">D→C Rate</th>
+            <th class="num">Avg Deal</th>
+            <th class="num">vs Last Mo</th>
+            <th class="num">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="leader">
+            <td><div class="lb-rank r1">1</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#1a7f5a;">AN</div><div><div class="lb-name">A. Nguyen</div><div class="lb-tier">Senior</div></div></div></td>
+            <td class="num">$3,000</td>
+            <td class="num" style="font-weight:700;color:var(--green);">$3,200</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:100%;background:var(--green);"></div></div><div class="lb-pct" style="color:var(--green);">107%</div></div></td>
+            <td class="num" style="font-weight:700;">3</td>
+            <td class="num">19 / 20</td>
+            <td class="num" style="color:var(--green);font-weight:700;">16%</td>
+            <td class="num">$1,067</td>
+            <td class="num"><span class="trend-up">↑ +$400</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--green2);color:var(--green);">🏆 Leader</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r2">2</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#2563a8;">SP</div><div><div class="lb-name">S. Patel</div><div class="lb-tier">Senior</div></div></div></td>
+            <td class="num">$3,000</td>
+            <td class="num" style="font-weight:700;color:var(--amber);">$2,800</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:93%;background:var(--amber);"></div></div><div class="lb-pct" style="color:var(--amber);">93%</div></div></td>
+            <td class="num" style="font-weight:700;">2</td>
+            <td class="num">18 / 20</td>
+            <td class="num" style="color:var(--amber);font-weight:700;">11%</td>
+            <td class="num">$1,400</td>
+            <td class="num"><span class="trend-dn">↓ -$200</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--amber2);color:var(--amber);">⚡ Close</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r3">3</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#c47b2b;">TO</div><div><div class="lb-name">T. Okafor</div><div class="lb-tier">Junior</div></div></div></td>
+            <td class="num">$2,500</td>
+            <td class="num" style="font-weight:700;color:var(--green);">$2,500</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:100%;background:var(--green);"></div></div><div class="lb-pct" style="color:var(--green);">100%</div></div></td>
+            <td class="num" style="font-weight:700;">2</td>
+            <td class="num">16 / 20</td>
+            <td class="num" style="color:var(--green);font-weight:700;">13%</td>
+            <td class="num">$1,250</td>
+            <td class="num"><span class="trend-up">↑ +$300</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--green2);color:var(--green);">📈 On Track</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r4">4</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#5c6bc0;">MC</div><div><div class="lb-name">M. Chen</div><div class="lb-tier">Junior</div></div></div></td>
+            <td class="num">$2,500</td>
+            <td class="num" style="font-weight:700;color:var(--amber);">$1,900</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:76%;background:var(--amber);"></div></div><div class="lb-pct" style="color:var(--amber);">76%</div></div></td>
+            <td class="num" style="font-weight:700;">2</td>
+            <td class="num">14 / 20</td>
+            <td class="num" style="color:var(--amber);font-weight:700;">14%</td>
+            <td class="num">$950</td>
+            <td class="num"><span class="trend-fl">→ flat</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--amber2);color:var(--amber);">⚠ Behind</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r5">5</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#a51c30;">JW</div><div><div class="lb-name">J. Walsh</div><div class="lb-tier">Junior</div></div></div></td>
+            <td class="num">$2,500</td>
+            <td class="num" style="font-weight:700;color:var(--cw-red);">$800</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:32%;background:var(--cw-red);"></div></div><div class="lb-pct" style="color:var(--cw-red);">32%</div></div></td>
+            <td class="num" style="font-weight:700;">1</td>
+            <td class="num">11 / 20</td>
+            <td class="num" style="color:var(--cw-red);font-weight:700;">9%</td>
+            <td class="num">$800</td>
+            <td class="num"><span class="trend-dn">↓ -$900</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--cw-red2);color:var(--cw-red);">🚨 At Risk</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TEAM TOTAL ROW -->
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 12px 0;margin-top:4px;border-top:2px solid var(--border);background:var(--bg);border-radius:0 0 8px 8px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);width:170px;">Team Total</div>
+        <div style="font-size:13px;font-weight:700;min-width:80px;text-align:right;">$13,500</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amber);min-width:80px;text-align:right;">$11,200</div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:83%;height:100%;background:var(--amber);border-radius:4px;"></div></div><div style="font-size:12px;font-weight:700;color:var(--amber);width:40px;text-align:right;">83%</div></div>
+        <div style="font-size:13px;font-weight:700;min-width:40px;text-align:right;">10</div>
+        <div style="font-size:13px;min-width:60px;text-align:right;color:var(--amber);">78/100</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green);min-width:50px;text-align:right;">13%</div>
+        <div style="font-size:13px;min-width:50px;text-align:right;">$1,060</div>
+        <div style="min-width:70px;text-align:right;"><span class="trend-dn">↓ -$280</span></div>
+        <div style="min-width:90px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YTD VIEW -->
+  <div id="lb-ytd" style="display:none;">
+    <div class="lb-highlight">
+      <span style="font-size:20px;">🏆</span>
+      <div><strong>A. Nguyen</strong> leads YTD with <strong>$41,800 MRR</strong> closed across 5 months — 116% of YTD target, 38 deals won, best demo conversion on the team.</div>
+    </div>
+
+    <!-- PODIUM YTD -->
+    <div class="podium-wrap">
+      <!-- 2nd: T. Okafor -->
+      <div class="podium-col p2">
+        <div class="podium-avatar" style="background:#c47b2b;">TO</div>
+        <div class="podium-name">T. Okafor</div>
+        <div class="podium-mrr" style="color:#c47b2b;">$33,200</div>
+        <div class="podium-attain" style="color:var(--text3);">88% YTD · 30 deals</div>
+        <div class="podium-block"><div class="podium-pos">2</div></div>
+      </div>
+      <!-- 1st: A. Nguyen -->
+      <div class="podium-col p1">
+        <div class="podium-avatar" style="background:#c47b2b;width:60px;height:60px;font-size:18px;">
+          <span class="crown">👑</span>AN
+        </div>
+        <div class="podium-name" style="font-size:14px;">A. Nguyen</div>
+        <div class="podium-mrr" style="color:#c47b2b;font-size:20px;">$41,800</div>
+        <div class="podium-attain" style="color:var(--green);font-weight:700;">116% YTD · 38 deals</div>
+        <div class="podium-block"><div class="podium-pos">1</div></div>
+      </div>
+      <!-- 3rd: S. Patel -->
+      <div class="podium-col p3">
+        <div class="podium-avatar" style="background:#2563a8;">SP</div>
+        <div class="podium-name">S. Patel</div>
+        <div class="podium-mrr" style="color:#2563a8;">$32,500</div>
+        <div class="podium-attain" style="color:var(--text3);">90% YTD · 28 deals</div>
+        <div class="podium-block"><div class="podium-pos">3</div></div>
+      </div>
+    </div>
+
+    <!-- FULL TABLE YTD -->
+    <div class="card">
+      <div class="card-title">Full Rankings — YTD FY2025 (Jan–May)</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Rep</th>
+            <th class="num">YTD Target</th>
+            <th class="num">YTD Closed</th>
+            <th style="min-width:140px;">Attainment</th>
+            <th class="num">Deals</th>
+            <th class="num">Demos Run</th>
+            <th class="num">D→C Rate</th>
+            <th class="num">Best Month</th>
+            <th class="num">Trend</th>
+            <th class="num">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="leader">
+            <td><div class="lb-rank r1">1</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#1a7f5a;">AN</div><div><div class="lb-name">A. Nguyen</div><div class="lb-tier">Senior · $3,000/mo</div></div></div></td>
+            <td class="num">$36,000</td>
+            <td class="num" style="font-weight:700;color:var(--green);">$41,800</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:100%;background:var(--green);"></div></div><div class="lb-pct" style="color:var(--green);">116%</div></div></td>
+            <td class="num" style="font-weight:700;">38</td>
+            <td class="num">92 / 100</td>
+            <td class="num" style="color:var(--green);font-weight:700;">41%</td>
+            <td class="num" style="color:var(--green);">$9,800 ↑</td>
+            <td class="num"><span class="trend-up">↑ Rising</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--green2);color:var(--green);">🏆 #1</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r2">2</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#c47b2b;">TO</div><div><div class="lb-name">T. Okafor</div><div class="lb-tier">Junior · $2,500/mo</div></div></div></td>
+            <td class="num">$30,000</td>
+            <td class="num" style="font-weight:700;color:var(--green);">$33,200</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:100%;background:var(--green);"></div></div><div class="lb-pct" style="color:var(--green);">111%</div></div></td>
+            <td class="num" style="font-weight:700;">30</td>
+            <td class="num">84 / 100</td>
+            <td class="num" style="color:var(--green);font-weight:700;">36%</td>
+            <td class="num" style="color:var(--green);">$7,700 ↑</td>
+            <td class="num"><span class="trend-up">↑ Rising</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--green2);color:var(--green);">📈 Above</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r3">3</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#2563a8;">SP</div><div><div class="lb-name">S. Patel</div><div class="lb-tier">Senior · $3,000/mo</div></div></div></td>
+            <td class="num">$36,000</td>
+            <td class="num" style="font-weight:700;color:var(--amber);">$32,500</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:90%;background:var(--amber);"></div></div><div class="lb-pct" style="color:var(--amber);">90%</div></div></td>
+            <td class="num" style="font-weight:700;">28</td>
+            <td class="num">88 / 100</td>
+            <td class="num" style="color:var(--amber);font-weight:700;">32%</td>
+            <td class="num" style="color:var(--amber);">$7,200 →</td>
+            <td class="num"><span class="trend-fl">→ Steady</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--amber2);color:var(--amber);">⚡ Close</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r4">4</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#5c6bc0;">MC</div><div><div class="lb-name">M. Chen</div><div class="lb-tier">Junior · $2,500/mo</div></div></div></td>
+            <td class="num">$30,000</td>
+            <td class="num" style="font-weight:700;color:var(--amber);">$24,600</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:82%;background:var(--amber);"></div></div><div class="lb-pct" style="color:var(--amber);">82%</div></div></td>
+            <td class="num" style="font-weight:700;">22</td>
+            <td class="num">72 / 100</td>
+            <td class="num" style="color:var(--amber);font-weight:700;">31%</td>
+            <td class="num" style="color:var(--amber);">$5,800 →</td>
+            <td class="num"><span class="trend-up">↑ Improving</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--amber2);color:var(--amber);">⚠ Behind</span></td>
+          </tr>
+          <tr>
+            <td><div class="lb-rank r5">5</div></td>
+            <td><div class="lb-rep-chip"><div class="lb-av" style="background:#a51c30;">JW</div><div><div class="lb-name">J. Walsh</div><div class="lb-tier">Junior · $2,500/mo</div></div></div></td>
+            <td class="num">$30,000</td>
+            <td class="num" style="font-weight:700;color:var(--cw-red);">$16,400</td>
+            <td><div class="lb-bar-wrap"><div class="lb-bar-track"><div class="lb-bar-fill" style="width:55%;background:var(--cw-red);"></div></div><div class="lb-pct" style="color:var(--cw-red);">55%</div></div></td>
+            <td class="num" style="font-weight:700;">15</td>
+            <td class="num">60 / 100</td>
+            <td class="num" style="color:var(--cw-red);font-weight:700;">25%</td>
+            <td class="num" style="color:var(--cw-red);">$4,200 ↓</td>
+            <td class="num"><span class="trend-dn">↓ Declining</span></td>
+            <td class="num"><span class="lb-badge" style="background:var(--cw-red2);color:var(--cw-red);">🚨 At Risk</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TEAM TOTAL ROW YTD -->
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 12px 0;margin-top:4px;border-top:2px solid var(--border);background:var(--bg);border-radius:0 0 8px 8px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);width:170px;">Team Total YTD</div>
+        <div style="font-size:13px;font-weight:700;min-width:80px;text-align:right;">$162,000</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amber);min-width:80px;text-align:right;">$148,500</div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;"><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:92%;height:100%;background:var(--green);border-radius:4px;"></div></div><div style="font-size:12px;font-weight:700;color:var(--green);width:40px;text-align:right;">92%</div></div>
+        <div style="font-size:13px;font-weight:700;min-width:40px;text-align:right;">133</div>
+        <div style="font-size:13px;min-width:60px;text-align:right;color:var(--amber);">396/500</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green);min-width:50px;text-align:right;">34%</div>
+        <div style="font-size:13px;min-width:50px;"></div>
+        <div style="min-width:70px;"></div>
+        <div style="min-width:90px;"></div>
+      </div>
+
+      <!-- YTD INSIGHT STRIP -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="background:var(--green2);border-radius:8px;padding:12px;border:1px solid #b6e4d0;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--green);margin-bottom:4px;">Best Performer YTD</div>
+          <div style="font-size:14px;font-weight:700;">A. Nguyen — 116%</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">38 deals · 41% demo conversion · consistently above target every month</div>
+        </div>
+        <div style="background:var(--amber2);border-radius:8px;padding:12px;border:1px solid #f0d4a0;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);margin-bottom:4px;">Most Improved YTD</div>
+          <div style="font-size:14px;font-weight:700;">T. Okafor — 111%</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">Junior rep now outperforming senior targets. Demo volume and conversion both trending up.</div>
+        </div>
+        <div style="background:var(--cw-red2);border-radius:8px;padding:12px;border:1px solid #f0b0b8;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--cw-red);margin-bottom:4px;">Priority Focus YTD</div>
+          <div style="font-size:14px;font-weight:700;">J. Walsh — 55%</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">Demo volume and conversion both below benchmark. Structured PIP and weekly coaching in place.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function showLbTab(tab, el) {
+    document.getElementById('lb-mtd').style.display = tab === 'mtd' ? 'block' : 'none';
+    document.getElementById('lb-ytd').style.display = tab === 'ytd' ? 'block' : 'none';
+    document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>
